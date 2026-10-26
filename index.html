@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Quizogram</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<style>
+:root{--bg:#f3f5ff;--card:rgba(255,255,255,.78);--bd:rgba(110,100,200,.16);--tx:#171B30;--mut:#7b809c;--ac:#6c63ff;--ac2:#4aa8ff;--grad:linear-gradient(135deg,#7a5cff,#3f8cff);--inp:rgba(255,255,255,.9);--nav:rgba(255,255,255,.85)}
+:root[data-t=dark]{--bg:#070a1c;--card:rgba(24,28,66,.62);--bd:rgba(130,120,255,.22);--tx:#F9FAFF;--mut:#9aa0c8;--inp:rgba(14,17,44,.7);--nav:rgba(12,15,40,.88)}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font:14px/1.35 -apple-system,"SF Pro Text",Inter,Roboto,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:84px;
+background-image:radial-gradient(60% 30% at 80% 0,rgba(122,92,255,.25),transparent),radial-gradient(50% 30% at 0 40%,rgba(63,140,255,.18),transparent);background-attachment:fixed}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;backdrop-filter:blur(18px);background:var(--nav);font-weight:600}
+.ib{width:36px;height:36px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);display:grid;place-items:center;cursor:pointer}
+.wrap{padding:12px 14px;max-width:520px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px;backdrop-filter:blur(16px);margin-bottom:12px}
+.banner{height:150px;border-radius:20px;background:#333 center/cover;position:relative}
+.av{width:92px;height:92px;border-radius:50%;border:3px solid #8a7bff;background:#222 center/cover;margin:-46px auto 0;position:relative;box-shadow:0 0 24px rgba(122,92,255,.55)}
+.center{text-align:center}.name{font-size:24px;font-weight:700;display:flex;gap:8px;align-items:center;justify-content:center;margin-top:8px}
+.star{position:relative;width:34px;height:34px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff}
+.star svg{position:absolute;inset:0;width:100%;height:100%;fill:#ffb02e;stroke:#ffd77a;stroke-width:1.2}.star b{position:relative;z-index:1}
+.tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0}.tag{padding:3px 10px;border-radius:99px;background:rgba(160,80,255,.2);color:#c9a6ff;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}.stat{padding:10px 4px;text-align:center;border-radius:14px;border:1px solid var(--bd);background:var(--card)}.stat b{display:block;font-size:16px}.stat span{font-size:10px;color:var(--mut)}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.btn{border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:12px;border-radius:14px;font:600 14px inherit;display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer}
+.btn.p{background:var(--grad);border:0;color:#fff;box-shadow:0 6px 22px rgba(90,90,255,.45)}
+.seg{display:flex;padding:3px;border-radius:12px;background:var(--inp);border:1px solid var(--bd);margin:10px 0}.seg button{flex:1;padding:8px;border:0;border-radius:9px;background:none;color:var(--mut);font:600 13px inherit}.seg .on{background:var(--grad);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.grid div{aspect-ratio:1;border-radius:12px;background:#222 center/cover;position:relative;overflow:hidden}
+.grid .vid{position:absolute;right:6px;top:6px;color:#fff}
+input,textarea,select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--inp);color:var(--tx);font:inherit;outline:0}
+input:focus,textarea:focus{border-color:var(--ac)}label{display:block;font-weight:600;margin:12px 0 6px}
+.h{font-size:13px;color:var(--mut)}
+.fonts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fonts button{padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--inp);color:var(--tx);font-size:15px}.fonts .on{border-color:var(--ac);box-shadow:0 0 0 2px rgba(108,99,255,.35)}
+.bars{height:10px;border-radius:9px;background:var(--inp);overflow:hidden}.bars i{display:block;height:100%;background:var(--grad)}
+.li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bd)}.li:last-child{border:0}.li div{flex:1}.li small{display:block;color:var(--mut)}
+.sw{width:44px;height:26px;border-radius:99px;background:var(--inp);border:1px solid var(--bd);position:relative}.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--mut);transition:.2s}.sw.on{background:var(--ac)}.sw.on::after{left:21px;background:#fff}
+.post{border-radius:20px;overflow:hidden;margin-bottom:12px;border:1px solid var(--bd);background:var(--card)}.post .m{aspect-ratio:4/5;background:#111 center/cover}.post video,.post img{width:100%;display:block}.post .t{padding:12px}
+.cm{display:flex;gap:10px;padding:10px 0}.cm .a{width:36px;height:36px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff;font-weight:700}.cm div{flex:1}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom));background:var(--nav);backdrop-filter:blur(20px);border-top:1px solid var(--bd);z-index:9}
+nav button{background:none;border:0;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;padding:4px 8px}nav .on{color:var(--ac2)}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--grad);color:#fff;padding:8px 16px;border-radius:99px;z-index:20}
+.prog{height:8px;background:var(--inp);border-radius:9px;margin:6px 0}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs><symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m5 5 14 14"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 7h4l2-3h4l2 3h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="12" cy="13" r="4"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol><symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v16h16M2 6h16v16"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v14m-5-5 5 5 5-5M4 18v3h16v-3"/></symbol><symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol><symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 22V3m0 1c5-3 9 3 15 0v12c-6 3-10-3-15 0"/></symbol><symbol id="i-gem" viewBox="0 0 24 24"><path d="M6 3h12l5 6-11 13L1 9zM1 9h22M6 3l3 6 3 13 3-13 3-6"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c-6 6-6 14 0 20M12 2c6 6 6 14 0 20"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></symbol><symbol id="i-house" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11H3z"/><path d="M9 21v-7h6v7"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="2"/><path d="m3 17 6-6 4 4 3-3 5 5"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="12" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/><circle cx="12" cy="16" r="1"/></symbol><symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.95L3 21l1.95-5.5a9 9 0 1 1 16.05-4z"/></symbol><symbol id="i-message-square" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9l-6 3V5a2 2 0 0 1 1-2z"/></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 13a9 9 0 0 1-10-10A9 9 0 1 0 21 13z"/></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="m4 20 4-.8L20 7a2 2 0 0 0-3-3L5 16zM14 7l3 3"/></symbol><symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l12-7z"/></symbol><symbol id="i-plus-square" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 7v10M7 12h10"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol><symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M20 7V3l-3 3A9 9 0 0 0 3 11m1 6v4l3-3a9 9 0 0 0 14-5"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l1 3 3 1 3-1 2 4-2 2v2l2 2-2 4-3-1-3 1-1 3h-4l-1-3-3-1-3 1-2-4 2-2v-2L1 9l2-4 3 1 3-1z"/></symbol><symbol id="i-share-2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m9 11 6-5m-6 8 6 4"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 21 6v6c0 6-4 9-9 11-5-2-9-5-9-11V6z"/><path d="m8 12 3 3 5-6"/></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3.1 6.5 7.1 1-5.1 5 1.2 7-6.3-3.3-6.3 3.3 1.2-7-5.1-5 7.1-1z"/></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M20 4l-2 2M6 18l-2 2"/></symbol><symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M4 7h16M10 3h4l1 4H9zM6 7l1 14h10l1-14M10 11v6m4-6v6"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 17V3m-5 5 5-5 5 5M4 17v4h16v-4"/></symbol><symbol id="i-user-plus" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 9v8m-4-4h8"/></symbol><symbol id="i-user-round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol><symbol id="i-users-round" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20a7 7 0 0 1 14 0M17 5a3 3 0 0 1 0 6m1 4a6 6 0 0 1 4 5"/></symbol><symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 5v1"/></symbol><symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="5" width="15" height="14" rx="3"/><path d="m17 10 5-3v10l-5-3"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol></defs></svg>
+<div id="app"></div>
+<nav id="nav"></nav>
+<input type="file" id="file" hidden>
+<script>
+/* ===== 1. FIREBASE: конфиг проекта quizogram-f0616. Если projectId пустой — демо-режим на localStorage ===== */
+/* Если Mini App лежит НЕ на сервере бота (например Firebase Hosting), впиши сюда адрес бота: "https://твой-бот.bothost.ru" */
+const API_BASE="";
+const FB={apiKey:"AIzaSyCyat0WAASdWk-mI5f8uZl9i2qpSRlZtsI",authDomain:"quizogram-f0616.firebaseapp.com",projectId:"quizogram-f0616",storageBucket:"quizogram-f0616.firebasestorage.app",messagingSenderId:"742761885301",appId:"1:742761885301:web:40218259a55afc81d0d23c"};
+const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();
+const tu=tg?.initDataUnsafe?.user||{id:"demo",first_name:"Александра",username:"alexandra"};
+let UID=String(tu.id);
+const I=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
+const BN=["https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900","https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900","https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900"];
+const FONTS=["system-ui","Georgia,serif","'Courier New',monospace","cursive","Impact,sans-serif","'Trebuchet MS',sans-serif"];
+const LV=3000;
+/* ===== 2. Слой данных (Firebase / localStorage) ===== */
+const live=!!FB.projectId&&!!tg?.initData;let fs,st;/* вне Telegram — демо-режим */
+const L={g:k=>JSON.parse(localStorage.getItem("qz_"+k)||"null"),s:(k,v)=>localStorage.setItem("qz_"+k,JSON.stringify(v))};
+if(live){firebase.initializeApp(FB);fs=firebase.firestore();st=firebase.storage();}
+const DB={
+ async user(id=UID){if(live){const d=await fs.doc("users/"+id).get();return d.exists?d.data():null}return L.g("u_"+id)},
+ async saveUser(u){if(live)return fs.doc("users/"+UID).set(u,{merge:true});L.s("u_"+UID,u)},
+ async posts(uid){if(live){const q=await fs.collection("posts").where("uid","==",uid).get();return q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.ts-a.ts)}return(L.g("posts")||[]).filter(p=>p.uid==uid)},
+ async addPost(p){if(live){const r=await fs.collection("posts").add(p);return r.id}const a=L.g("posts")||[];p.id=Date.now()+"";a.unshift(p);L.s("posts",a)},
+ async upload(f){if(live){const r=st.ref(`media/${UID}/${Date.now()}_${f.name}`);await r.put(f);return r.getDownloadURL()}
+  return new Promise(r=>{const x=new FileReader;x.onload=()=>r(x.result);x.readAsDataURL(f)})},
+ async comments(pid){if(live){const q=await fs.collection(`posts/${pid}/comments`).orderBy("ts","desc").get();return q.docs.map(d=>d.data())}return L.g("c_"+pid)||[]},
+ async addComment(pid,c){if(live){await fs.collection(`posts/${pid}/comments`).add(c);return fs.doc("posts/"+pid).update({cm:firebase.firestore.FieldValue.increment(1)})}
+  const a=L.g("c_"+pid)||[];a.unshift(c);L.s("c_"+pid,a);const p=L.g("posts");p.find(x=>x.id==pid).cm++;L.s("posts",p)},
+ async like(pid){if(live)return fs.doc("posts/"+pid).update({lk:firebase.firestore.FieldValue.increment(1)});const p=L.g("posts");p.find(x=>x.id==pid).lk++;L.s("posts",p)}
+};
+/* ===== 3. Состояние и UI ===== */
+let me,posts=[],view="profile",tab="all",draft={},toastT;
+const $=s=>document.querySelector(s),app=$("#app");
+const lvl=u=>Math.floor((u.xp||0)/LV)+1;
+const toast=t=>{document.querySelectorAll(".toast").forEach(e=>e.remove());const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),1800)};
+const theme=t=>{document.documentElement.dataset.t=t;L.s("theme",t);tg?.setHeaderColor?.(t=="dark"?"#070a1c":"#f3f5ff")};
+theme(L.g("theme")||(tg?.colorScheme)||"dark");
+const star=n=>`<span class="star"><svg class="i"><use href="#i-star"/></svg><b>${n}</b></span>`;
+const top=(t,back,r="")=>`<div class="top"><button class="ib" onclick="go('${back||"profile"}')">${back===null?"":I("x")}</button><span>${t}</span><span style="min-width:36px">${r}</span></div>`;
+function go(v,x){view=v;draft=x||draft;render();scrollTo(0,0)}
+function navbar(){const t=[["profile","user-round","Профиль"],["feed","house","Лента"],["add","plus-square","Публикация"],["privacy","shield","Приватность"],["settings","settings","Настройки"]];
+ $("#nav").innerHTML=t.map(([v,ic,l])=>`<button class="${view==v?"on":""}" onclick="go('${v}')">${I(ic)}${l}</button>`).join("")}
+async function render(){
+ navbar();
+ const V={profile,edit,level,add,privacy,settings,post,feed};await V[view]()}
+async function profile(){
+ const u=me,ps=posts.filter(p=>tab=="all"||p.type==tab);
+ app.innerHTML=top("Мой профиль",null,`<button class="ib" onclick="go('settings')">${I("settings")}</button>`)+`<div class="wrap">
+ <div class="banner" style="background-image:url(${u.banner})"></div><div class="av" style="background-image:url(${u.avatar})"></div>
+ <div class="name" style="font-family:${FONTS[u.font||0]}"><span onclick="go('level')">${star(lvl(u))}</span>${u.name}</div>
+ <div class="h center">@${u.username}</div>
+ <div class="tags">${(u.tags||[]).map(t=>`<span class="tag">@${t}</span>`).join("")}</div>
+ <div class="stats"><div class="stat"><b>${posts.length}</b><span>Публикации</span></div><div class="stat"><b>${posts.reduce((a,p)=>a+(p.views||0),0)}</b><span>Просмотры</span></div><div class="stat"><b>${lvl(u)}</b><span>Уровень</span></div><div class="stat"><b>${new Date(u.created).toLocaleDateString("ru",{month:"short",year:"numeric"})}</b><span>Регистрация</span></div></div>
+ <div class="row"><button class="btn" onclick="go('edit')">${I("pencil")}Редактировать</button><button class="btn" onclick="go('settings')">${I("settings")}Настройки</button></div>
+ <h3 style="margin:16px 0 4px">Публикации</h3>
+ <div class="seg">${[["all","Все"],["photo","Фото"],["video","Видео"]].map(([k,l])=>`<button class="${tab==k?"on":""}" onclick="tab='${k}';profile()">${l}</button>`).join("")}</div>
+ <div class="grid">${ps.map(p=>`<div style="background-image:url(${p.type=="photo"?p.url:""})" onclick="go('post',{pid:'${p.id}'})">${p.type=="video"?`<video src="${p.url}" muted style="width:100%;height:100%;object-fit:cover"></video><span class="vid">${I("play")}</span>`:""}</div>`).join("")||'<p class="h">Пока нет публикаций</p>'}</div></div>`}
+async function edit(){
+ const u=draft.u||{...me};draft.u=u;
+ app.innerHTML=top("Редактирование профиля")+`<div class="wrap">
+ <div class="banner" style="background-image:url(${u.banner})"></div><div class="av" style="background-image:url(${u.avatar})"></div>
+ <label>Баннер</label><div class="grid">${BN.map(b=>`<div style="background-image:url(${b})" onclick="draft.u.banner='${b}';edit()"></div>`).join("")}<div onclick="pick(f=>{draft.u.banner=f;edit()})" style="display:grid;place-items:center;border:1px dashed var(--bd);background:none">${I("upload")}</div></div>
+ <label>Аватарка</label><button class="btn" onclick="pick(f=>{draft.u.avatar=f;edit()})">${I("camera")}Выбрать фото</button>
+ <label>Имя</label><input id="nm" maxlength="32" value="${u.name}" oninput="draft.u.name=this.value;document.getElementById('pv').textContent=this.value">
+ <label>Шрифт</label><div class="fonts">${FONTS.map((f,i)=>`<button class="${(u.font||0)==i?"on":""}" style="font-family:${f}" onclick="draft.u.font=${i};edit()">${u.name}</button>`).join("")}</div>
+ <label>Предпросмотр</label><div class="card name" style="font-family:${FONTS[u.font||0]}">${star(lvl(u))}<span id="pv">${u.name}</span></div>
+ <div class="row" style="margin-top:12px"><button class="btn" onclick="draft={};go('profile')">Отменить</button><button class="btn p" onclick="saveProfile()">Сохранить</button></div></div>`}
+async function saveProfile(){me={...me,...draft.u};await DB.saveUser(me);draft={};toast("Сохранено");go("profile")}
+function pick(cb,accept="image/*"){const f=$("#file");f.accept=accept;f.onchange=async()=>{if(f.files[0]){toast("Загрузка…");cb(await DB.upload(f.files[0]),f.files[0]);f.value=""}};f.click()}
+async function level(){const u=me,x=(u.xp||0)%LV,r=[["Заполнить профиль",50],["Опубликовать фото",100],["Опубликовать видео",150],["Получить достижение","???"]];
+ app.innerHTML=top("Уровень профиля")+`<div class="wrap center"><div style="transform:scale(2.4);margin:40px 0 28px;display:inline-block">${star(lvl(u))}</div>
+ <p><b>${x} / ${LV} XP</b></p><div class="prog"><div class="bars"><i style="width:${x/LV*100}%"></i></div></div>
+ <p class="h">До ${lvl(u)+1} уровня: ${LV-x} XP</p>
+ <div class="card" style="text-align:left;margin-top:16px"><b>Как получать опыт?</b>${r.map(([t,v])=>`<div class="li">${I("star")}<div>${t}</div><span class="h">+${v} XP</span></div>`).join("")}</div></div>`}
+async function add(){
+ const d=draft.p||{type:"photo"};draft.p=d;
+ app.innerHTML=top("Добавление публикации")+`<div class="wrap"><div class="seg"><button class="${d.type=="photo"?"on":""}" onclick="draft.p.type='photo';draft.p.url='';add()">Фото</button><button class="${d.type=="video"?"on":""}" onclick="draft.p.type='video';draft.p.url='';add()">Видео</button></div>
+ <div class="card center" onclick="pick(u=>{draft.p.url=u;add()},'${d.type}/*')" style="min-height:140px;display:grid;place-items:center;background-size:cover;background-position:center;${d.url&&d.type=="photo"?`background-image:url(${d.url})`:""}">${d.url?(d.type=="video"?"Видео выбрано ✓":""):I("upload")+"<div>Нажми, чтобы выбрать</div>"}</div>
+ <label>Название</label><input id="pt" maxlength="100" value="${d.title||""}" oninput="draft.p.title=this.value">
+ <label>Описание</label><textarea rows="3" maxlength="500" oninput="draft.p.desc=this.value">${d.desc||""}</textarea>
+ <label>Видимость</label><select onchange="draft.p.vis=this.value"><option value="all">Все</option><option value="friends">Друзья</option><option value="me">Только я</option></select>
+ <button class="btn p" style="width:100%;margin-top:16px" onclick="publish()">Опубликовать</button></div>`}
+async function publish(){const d=draft.p;if(!d.url)return toast("Выбери файл");
+ await DB.addPost({uid:UID,type:d.type,url:d.url,title:d.title||"",desc:d.desc||"",vis:d.vis||"all",lk:0,cm:0,views:0,ts:Date.now()});
+ me.xp=(me.xp||0)+(d.type=="video"?150:100);await DB.saveUser({xp:me.xp});posts=await DB.posts(UID);draft={};toast("Опубликовано +XP");go("profile")}
+async function post(){
+ const p=posts.find(x=>x.id==draft.pid),cs=await DB.comments(p.id);
+ app.innerHTML=top("Публикация","profile")+`<div class="wrap"><div class="post">${p.type=="video"?`<video src="${p.url}" controls playsinline></video>`:`<img src="${p.url}">`}<div class="t"><b>${p.title}</b><div class="h">${p.desc}</div>
+ <div class="row" style="margin-top:8px"><span class="h" style="display:flex;gap:6px" onclick="DB.like('${p.id}').then(async()=>{posts=await DB.posts(UID);post()})">${I("heart")}${p.lk}</span><span class="h" style="display:flex;gap:6px">${I("message-circle")}${p.cm}</span><span class="h" style="display:flex;gap:6px">${I("eye")}${p.views||0}</span></div></div></div>
+ <h3>Комментарии</h3>${cs.map(c=>`<div class="cm"><span class="a">${c.n[0]}</span><div><b>@${c.n}</b><div>${c.t}</div></div></div>`).join("")||'<p class="h">Пока пусто</p>'}
+ <div class="row" style="margin-top:10px"><input id="ci" placeholder="Написать комментарий…"><button class="ib" style="flex:none" onclick="sendC('${p.id}')">${I("message-square")}</button></div></div>`}
+async function sendC(id){const t=$("#ci").value.trim();if(!t)return;await DB.addComment(id,{n:me.username,t,ts:Date.now()});posts=await DB.posts(UID);post()}
+async function feed(){app.innerHTML=top("Лента",null)+`<div class="wrap">${posts.map(p=>`<div class="post" onclick="go('post',{pid:'${p.id}'})">${p.type=="video"?`<video src="${p.url}" muted playsinline></video>`:`<img src="${p.url}">`}<div class="t"><b>${p.title}</b></div></div>`).join("")||'<p class="h center">Публикаций пока нет</p>'}</div>`}
+const PV=[["Кто может видеть профиль","eye"],["Кто может видеть публикации","image"],["Кто может комментировать","message-circle"],["Кто может отправлять сообщения","message-square"],["Кто может добавлять в друзья","user-plus"]];
+async function privacy(){const pr=me.privacy||{};
+ app.innerHTML=top("Настройки приватности")+`<div class="wrap"><div class="card">${PV.map(([t,ic],i)=>`<div class="li">${I(ic)}<div>${t}<select style="margin-top:6px" onchange="setP(${i},this.value)">${["Все пользователи","Друзья","Только я"].map(o=>`<option ${pr[i]==o?"selected":""}>${o}</option>`).join("")}</select></div></div>`).join("")}</div>
+ <div class="card"><div class="li">${I("ban")}<div>Заблокированные пользователи<small>0 пользователей</small></div></div></div></div>`}
+function setP(i,v){me.privacy={...(me.privacy||{}),[i]:v};DB.saveUser({privacy:me.privacy});toast("Сохранено")}
+async function settings(){const d=document.documentElement.dataset.t=="dark";
+ app.innerHTML=top("Настройки")+`<div class="wrap"><div class="card">
+ <div class="li" onclick="theme('${d?"light":"dark"}');settings()">${I(d?"moon":"sun")}<div>Тёмная тема</div><span class="sw ${d?"on":""}"></span></div>
+ <div class="li" onclick="go('edit')">${I("pencil")}<div>Редактировать профиль</div></div>
+ <div class="li" onclick="go('level')">${I("star")}<div>Уровень и опыт</div></div>
+ <div class="li" onclick="go('privacy')">${I("lock")}<div>Приватность</div></div></div></div>`}
+(async()=>{
+ if(live){try{const r=await fetch(API_BASE+"/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({initData:tg.initData})});if(!r.ok)throw 0;await firebase.auth().signInWithCustomToken((await r.json()).token)}catch(e){try{const c=await firebase.auth().signInAnonymously();UID=c.user.uid}catch(e2){app.innerHTML='<p class="center" style="padding:40px">Не удалось войти. Открой приложение из Telegram.</p>';return}}}
+ me=await DB.user();
+ if(!me){me={name:tu.first_name||"Пользователь",username:tu.username||"user"+UID,avatar:tu.photo_url||BN[2],banner:BN[0],font:0,xp:0,tags:[],created:Date.now()};await DB.saveUser(me)}
+ posts=await DB.posts(UID);render()})();
+</script></body></html>
